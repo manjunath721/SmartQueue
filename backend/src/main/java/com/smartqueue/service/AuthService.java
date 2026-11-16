@@ -90,12 +90,12 @@ public class AuthService {
                 registerRequest.getPhone()
         );
 
-        final RoleType roleType = (registerRequest.getRole() != null && registerRequest.getRole().equalsIgnoreCase("ROLE_ADMIN"))
-                ? RoleType.ROLE_ADMIN
-                : RoleType.ROLE_STAFF;
+        final RoleType roleType = RoleType.ROLE_STAFF;
 
         Role role = roleRepository.findByName(roleType)
-                .orElseThrow(() -> new QueueException("Role " + roleType + " not found in database"));
+        .orElseThrow(() ->
+            new QueueException("Role " + roleType + " not found in database")
+        );
 
         user.setRoles(Collections.singleton(role));
         User savedUser = userRepository.save(user);

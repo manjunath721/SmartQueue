@@ -72,20 +72,29 @@ public class SecurityConfig {
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Public authentication and health checks
-                .requestMatchers("/api/auth/**", "/api/health/**", "/actuator/**").permitAll()
-                // Public service listings and token tracking
+
+                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                // Only login is publicly accessible
+
+                .requestMatchers("/api/health/**", "/actuator/health").permitAll()
+                // Public health endpoint
+
                 .requestMatchers(HttpMethod.GET, "/api/services/**").permitAll()
+                // Public customer-facing endpoints
+                
                 .requestMatchers("/api/customer/**").permitAll()
-                // Staff endpoints
-                .requestMatchers("/api/staff/**").hasAnyRole("STAFF", "ADMIN")
-                // Admin endpoints
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                // Allow error path
-                .requestMatchers("/error").permitAll()
-                // Any other request must be authenticated
+                // Admin-only operations
+
+                .requestMatchers("/api/staff/**").hasAnyRole("STAFF", "ADMIN")
+                // Staff and admin operations
+
+                .requestMatchers("/api/auth/me").authenticated()
+                // Authenticated user profile
+
                 .anyRequest().authenticated()
-            );
+                // Everything else requires authentication
+        );
 
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

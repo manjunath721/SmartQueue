@@ -1,5 +1,6 @@
 package com.smartqueue.config;
 
+import org.springframework.context.annotation.Profile;
 import com.smartqueue.dto.request.CreateTokenRequest;
 import com.smartqueue.entity.*;
 import com.smartqueue.enums.RoleType;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @Component
+@Profile("!prod")
 public class DataInitializer implements CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(DataInitializer.class);

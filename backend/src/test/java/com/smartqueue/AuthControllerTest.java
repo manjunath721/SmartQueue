@@ -51,24 +51,23 @@ class AuthControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    @Test
-    @DisplayName("Should successfully register a new staff account")
-    void testRegisterNewStaff() throws Exception {
-        RegisterRequest registerRequest = new RegisterRequest();
-        registerRequest.setUsername("staff_new_" + System.currentTimeMillis());
-        registerRequest.setEmail("staff_new_" + System.currentTimeMillis() + "@smartqueue.com");
-        registerRequest.setPassword("SecretPass123!");
-        registerRequest.setFullName("New Staff Tester");
-        registerRequest.setPhone("+15559876543");
-        registerRequest.setRole("ROLE_STAFF");
+@Test
+void testPublicStaffRegistrationIsBlocked() throws Exception {
 
-        mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(registerRequest)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNotEmpty())
-                .andExpect(jsonPath("$.fullName").value("New Staff Tester"));
-    }
+    RegisterRequest request = new RegisterRequest();
+
+    request.setUsername("unauthorized_staff");
+    request.setEmail("unauthorized@smartqueue.com");
+    request.setPassword("SecretPass123!");
+    request.setFullName("Unauthorized User");
+    request.setPhone("+15559876543");
+    request.setRole("ROLE_STAFF");
+
+    mockMvc.perform(post("/api/auth/register")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isUnauthorized());
+}
 
     @Test
     @DisplayName("Should allow public access to active services")
