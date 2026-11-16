@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  smartqueue-db:
+    image: postgres:16-alpine
+    container_name: smartqueue-db
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME:-smartqueue_db}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./database/seed_data.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d smartqueue_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  smartqueue-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smartqueue-backend
+    restart: always
+    depends_on:
+      smartqueue-db:
+        condition: service_healthy
+    environment:
+      PORT: 8080
+      DB_HOST: smartqueue-db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-smartqueue_db}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173,http://localhost}
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  smartqueue-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: smartqueue-frontend
+    restart: always
+    depends_on:
+      - smartqueue-backend
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:

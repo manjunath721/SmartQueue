@@ -1,0 +1,292 @@
+{
+  "info": {
+    "name": "SMART QUEUE API - Complete Collection",
+    "_postman_id": "b3abd66f-622f-47c5-84ad-83bd2c83f6f5",
+    "description": "Production REST API collection for SMART QUEUE: Digital Customer Queue & Service Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "staffToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "trackingId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health & Status",
+      "item": [
+        {
+          "name": "API Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Authentication",
+      "item": [
+        {
+          "name": "Login - Administrator",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.accessToken) {",
+                  "    pm.collectionVariables.set('adminToken', jsonData.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"AdminPassword123!\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "Login - Staff Sarah",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.accessToken) {",
+                  "    pm.collectionVariables.set('staffToken', jsonData.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"staff_sarah\",\n  \"password\": \"StaffPassword123!\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "Get Current User Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        },
+        {
+          "name": "Register New Staff",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"staff_john\",\n  \"email\": \"john@smartqueue.com\",\n  \"password\": \"SecretPass123!\",\n  \"fullName\": \"John Doe\",\n  \"phone\": \"+1 (555) 444-9988\",\n  \"role\": \"ROLE_STAFF\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Public Customer Queue Operations",
+      "item": [
+        {
+          "name": "Get Active Services",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/services"
+          }
+        },
+        {
+          "name": "Generate Customer Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.trackingId) {",
+                  "    pm.collectionVariables.set('trackingId', jsonData.trackingId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceId\": 1,\n  \"customerName\": \"Alice Freeman\",\n  \"customerPhone\": \"+15551234567\",\n  \"customerEmail\": \"alice@example.com\"\n}"
+            },
+            "url": "{{baseUrl}}/api/customer/tokens"
+          }
+        },
+        {
+          "name": "Track Token Live Status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/customer/tokens/{{trackingId}}"
+          }
+        },
+        {
+          "name": "Get Live TV Display Board",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/customer/display-board"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Staff Operations",
+      "item": [
+        {
+          "name": "Get Staff Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }],
+            "url": "{{baseUrl}}/api/staff/dashboard"
+          }
+        },
+        {
+          "name": "Get Waiting Queue",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }],
+            "url": "{{baseUrl}}/api/staff/queue?serviceId=1"
+          }
+        },
+        {
+          "name": "Call Next Waiting Customer (FIFO)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceId\": 1,\n  \"counterName\": \"Counter 1\"\n}"
+            },
+            "url": "{{baseUrl}}/api/staff/queue/call-next"
+          }
+        },
+        {
+          "name": "Complete Service",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }],
+            "url": "{{baseUrl}}/api/staff/tokens/1/complete"
+          }
+        },
+        {
+          "name": "Cancel Token",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Customer absent when called\"\n}"
+            },
+            "url": "{{baseUrl}}/api/staff/tokens/2/cancel"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Administrator Console",
+      "item": [
+        {
+          "name": "Get Admin Dashboard Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/admin/dashboard"
+          }
+        },
+        {
+          "name": "Get All Customers (Search & Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/admin/customers?page=0&size=10"
+          }
+        },
+        {
+          "name": "Get All Queue Tokens (Filtered & Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/admin/tokens?page=0&size=10&status=WAITING"
+          }
+        },
+        {
+          "name": "Get Staff Accounts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/admin/staff"
+          }
+        },
+        {
+          "name": "Create New Service Desk",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"VIP Priority Lounge\",\n  \"code\": \"VIP\",\n  \"prefix\": \"V\",\n  \"description\": \"Dedicated concierge for premium clients\",\n  \"avgDurationMinutes\": 10,\n  \"active\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/services"
+          }
+        },
+        {
+          "name": "Toggle Service Desk Active Status",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/api/services/1/toggle-status"
+          }
+        }
+      ]
+    }
+  ]
+}
